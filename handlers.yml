@@ -1,0 +1,19 @@
+---
+- hosts: all
+  become: true
+  tasks:
+   - name: install apache HTTP server
+     apt:
+        name: apache2
+        state: present
+   - name: copy the files
+     copy:
+       src: index.html 
+       desr: /var/www/html/index.html
+     notify:
+      - start apache server
+  handlers:
+   - name: start apache server
+     service:
+         name=apache2
+         state=restarted        

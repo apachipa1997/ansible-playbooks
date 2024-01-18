@@ -1,0 +1,14 @@
+---
+- hosts: all
+  become:
+  tasks:
+   - name: install git
+     apt
+      name: git
+      status: present
+   - name: git clone
+     git: 
+        repo: https://github.com/anusha977/cgbu.git
+        dest: /etc/ansible/anusha977
+
+

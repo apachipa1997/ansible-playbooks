@@ -1,0 +1,19 @@
+---
+- hosts: all
+  become: true
+  tasks:
+   - name: uninstall wget
+     apt:
+       name: wget
+       state: absent
+   - name: remove jenkinspath
+     shell: sudo rm -rf /etc/apt/sources.list.d/pkg_jenkins_io_debian_stable.list
+   - name: uninstall openjdk
+     apt:
+       name: openjdk-1.8-jre-headless
+       state: absent
+    
+   - name: uninstall jenkins
+     apt:
+       name: jenkins
+       state: absent

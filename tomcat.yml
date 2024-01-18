@@ -1,0 +1,94 @@
+---
+- hosts: all
+   become: true
+   tasks: 
+     - name: create new user
+       user: 
+         name: tomcat
+         shell: /bin/bash
+         comment: "tomcat management account"
+         expires: -1
+         password: "{{ 'tomcat123' | password_hash('sha512','a512')}}"
+     - name: setup sudo access for tomcat user
+       copy:
+         dest: /etc/sudoers.d/tomcat
+         content: 'tomcat ALL=(ALL:ALL) NOPASSWD: ALL'
+         validate: /usr/sbin/visudo -cf %s
+
+     - name: install java
+       apt: 
+         name: openjdk-11-jre-headless
+         state: present
+     - name: download url
+       get_url: 
+         url: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.84/bin/apache-tomcat-9.0.84.tar.gz
+         dest: /tmp 
+     - name: copy destination file
+       copy: 
+         src: /tmp/apache-tomcat-9.0.84.tar.gz
+         dest: /usr/local
+         remote_src: yes
+     - name: install unzip
+       apt:
+         name: unzip
+         state: present
+     - name: extract the apache file
+       unarchive: 
+         src: /usr/local/apache-tomcat-9.0.84.tar.gz
+         dest: /usr/local
+         remote_src: yes 
+     - name: change file ownership,group and permissions
+       file: 
+         path: /usr/local/apache-tomcat-9.0.84
+         owner: tomcat
+         group: tomcat
+         recurse: yes
+         state: directory
+     - name: make tomcat symbolic
+       file: 
+         src: /usr/local/apache-tomcat-9.0.84
+         dest: /usr/local/tomcat-9.0.84 
+         owner: tomcat
+         group: tomcat
+         state: link
+     - name: make tomcat.service
+       file: 
+         path: /etc/systemd/system/tomcat.service
+         state: touch
+     - name: edit tomcat.service
+       blockinfile: 
+         dest: /etc/systemd/system/tomcat.service
+         insertafter: 
+         block: | 
+           [Unit]
+           Description=Apache Tomcat Server
+           After=syslog.target network.target
+
+           [Service]
+           Type=forking
+
+           User=tomcat
+           Group=tomcat
+
+           Environment=CATALINA_PID=/usr/local/tomcat-9.0.84/temp/tomcat.pid
+           Environment=CATALINA_HOME=/usr/local/tomcat-9.0.84
+           Environment=CATALINA_BASE=/usr/local/tomcat-9.0.84
+
+           ExecStart=/usr/local/tomcat-9.0.84/bin/catalina.sh start
+           ExecStop=/usr/local/tomcat-9.0.84/bin/catalina.sh stop
+
+           RestartSec=10
+           Restart=always
+
+           [Install]
+           WantedBy=multi-user.target
+     - name: change mode tomcat permissions
+       file: 
+         path: /etc/systemd/system/tomcat.service
+         mode: 0755
+     - name: start tomcat service
+       systemd: 
+         name: tomcat.service
+         state: start
+         daemon_reload: yes 
+         enabled: yes   

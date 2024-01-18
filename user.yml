@@ -1,0 +1,25 @@
+---
+ - hosts: all
+   become: true
+   tasks: 
+     - name: create new user
+       user: 
+         name: aws
+         shell: /bin/bash
+         comment: "aws management account"
+         expires: -1
+         password: "{{ '12345' | password_hash('sha512','a512')}}"
+     - name: disable password authentication
+       lineinfile: 
+         dest: /etc/ssh/sshd_config
+         regexp: '^ PasswordAuthentication'
+         line: "PasswordAuthentication no"
+         state: present
+         backup: yes
+       notify:  
+         - restartssh
+   handlers:
+     - name: restartssh
+       service: 
+         name: sshd 
+         state: restarted
