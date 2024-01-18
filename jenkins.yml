@@ -1,5 +1,5 @@
 ---
-- hosts: 192.168.56.6
+- hosts: all
   become: true
   tasks:
    - name: install java
