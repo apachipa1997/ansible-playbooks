@@ -29,7 +29,7 @@
      service:
        name: jenkins
        state: started
-   - name: init password jenkin
+   - name: init password jenkins
      shell: cat /var/lib/jenkins/secrets/initialAdminPassword
      changed_when: false
      register: result
